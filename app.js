@@ -4,7 +4,6 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const Groq = require('groq-sdk');
 const Report = require('./models/Report.js');
-const cors = require('cors');
 const OpenAI = require("openai");
 const path = require('path');
 
@@ -14,7 +13,6 @@ dotenv.config({ path: '.env' });
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'build')));
 
