@@ -1,6 +1,5 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const { MongoClient } = require('mongodb');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const Groq = require('groq-sdk');
@@ -13,8 +12,6 @@ dotenv.config({ path: '.env' });
 
 const app = express();
 const port = process.env.PORT || 5000;
-const mongoClient = new MongoClient(process.env.MONGODB_URI);
-const db = mongoClient.db('Cluster0');
 
 app.use(cors());
 app.use(bodyParser.json());
