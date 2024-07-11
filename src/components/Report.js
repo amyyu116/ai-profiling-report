@@ -15,7 +15,7 @@ const Report = (props) => {
             try {
                 setReport(null);
                 console.log('Fetching report...');
-                const response = await axios.post(`https://ai-profiling-report-203a5cc0e4e5.herokuapp.com/report/${props.prolificID}`, {
+                const response = await axios.post(`/report/${props.prolificID}`, {
                     prolificID: props.prolificID,
                     model: props.model
                 });

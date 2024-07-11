@@ -23,6 +23,9 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
+console.log('Starting server setup...');
+
+
 mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI);
 
 mongoose.connection.on('error', (err) => {
