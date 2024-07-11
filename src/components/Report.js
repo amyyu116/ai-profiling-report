@@ -22,6 +22,7 @@ const Report = (props) => {
                 setReport(response.data);
                 setError(null);
             } catch (error) {
+                console.log(error);
                 setError(error.response?.data?.message || 'An error occurred while fetching the report.');
             }
         };
