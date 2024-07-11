@@ -1,29 +1,50 @@
 import React, { useState } from 'react';
+import styles from '../index.module.css';
+
 import { useNavigate } from 'react-router-dom';
+import { Input, ConfigProvider } from 'antd';
+
 
 const Home = () => {
     const [prolificID, setProlificID] = useState('');
     const navigate = useNavigate();
+    const { Search } = Input;
 
     const handleSubmit = (event) => {
         event.preventDefault();
         navigate(`/report/${prolificID}`);
     };
 
+
     return (
         <div>
-            <h1>AI Profiling Report</h1>
-            <form onSubmit={handleSubmit}>
-                <label>
-                    Prolific ID:
-                    <input
-                        type="text"
-                        value={prolificID}
-                        onChange={(e) => setProlificID(e.target.value)}
-                    />
-                </label>
-                <button type="submit">Generate Report</button>
-            </form>
+            <ConfigProvider
+                theme={{
+                    token: {
+                        // Primary color for components
+                        colorPrimary: '#556b2f',
+                    },
+                }}
+            >
+                <div className={styles.header}>
+                    <h1>AI Profiling Report</h1>
+                    <form onSubmit={handleSubmit} className={styles.form}>
+                        Welcome! Search your Prolific ID to be redirected to a personalized AI-generated profiling report. <br />
+                        <Search
+                            placeholder="Enter Prolific ID here"
+                            allowClear
+                            enterButton="Generate Report"
+                            size="large"
+                            style={{
+                                width: 500,
+                                "padding-top": "16px",
+                            }}
+                            onSearch={(value) => setProlificID(value)}
+                        />
+                    </form>
+
+                </div>
+            </ConfigProvider>
         </div>
     );
 };

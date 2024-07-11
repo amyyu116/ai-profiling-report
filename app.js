@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const { MongoClient } = require('mongodb');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
-const Groq = require('groq-sdk'); // Hypothetical package, replace with actual if available
+const Groq = require('groq-sdk');
 const Report = require('./models/Report.js');
 const cors = require('cors');
 const OpenAI = require("openai");
@@ -17,12 +17,12 @@ const mongoClient = new MongoClient(process.env.MONGODB_URI);
 const db = mongoClient.db('Cluster0');
 
 app.use(cors());
-
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'build')));
 
 const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY, // Replace with your OpenAI API key
+    apiKey: process.env.OPENAI_API_KEY,
 });
 
 mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI);
@@ -38,7 +38,7 @@ async function userToPrompt(user) {
     let prompt = `The user you are profiling is someone with the username ${user.username}.\n\n`;
     prompt += `${user.profile.name ? `Their display name on their profile is ${user.profile.name}. ` : ''}`;
     prompt += `${user.profile.location ? `Their location on their profile is ${user.profile.location}. ` : ''}`;
-    prompt += `${user.profile.bio ? `Their bio on their profile is ${user.profile.bio}. ` : ''}`;
+    prompt += `${user.profile.bio ? `Their bio on their profile is "${user.profile.bio}". ` : ''}`;
     if (user.profile.topics.length > 0) {
         const interests = user.profile.topics.join(', ');
         prompt += `${interests ? `They have listed on their profile that they are interested in seeing posts about ${interests}` : 'They have left the "interests" field on their profile blank.'}.\n\n`;
@@ -47,14 +47,25 @@ async function userToPrompt(user) {
     for (const interaction of userInteractions) {
         if (user[interaction].length > 0) {
             const users = user[interaction].join(', ');
-            prompt += `Over their time on the social media simulation, they have ${interaction} the following users: ${users}.\n`;
+            prompt += `\nOver their time on the social media simulation, they have ${interaction} the following users: ${users}.\n`;
         }
     }
     prompt += `During their time spent on the social media simulation, they have made ${user.numPosts + 1} post(s) on the platform.\n`;
+    let postNumber = 1;
     user.posts.reverse().forEach(post => {
-        prompt += `- ${post.body}\n`;
+        prompt += `Post ${postNumber}: "${post.body}"\n`;
+        if (post.comments && post.comments.length > 0) {
+            let userComments = post.comments.filter((comment) => (!comment.actor));
+            if (userComments.length > 0) {
+                prompt += "On this post, they made the following comments: \n"
+                userComments.forEach(comment => {
+                    prompt += `  - ${comment.body}\n`;
+                });
+            }
+        }
+        ++postNumber;
+        prompt += `\n`;
     });
-
     const actions = {
         posts: { flagged: [], liked: [] },
         comments: { flagged: [], liked: [] }
@@ -88,16 +99,18 @@ async function userToPrompt(user) {
             } else {
                 prompt += `During their time spent on the social media simulation, they ${action} the following ${item}:\n`;
                 actions[item][action].forEach(post => {
-                    prompt += `- "${post.body}" (written by user ${post.actor})\n`;
+                    prompt += `- "${post.body.replace(/\n/g, "")}" (written by ${post.actor})\n`;
                 });
+                prompt += `\n`;
             }
         }
     }
 
     if (comments.length > 0) {
-        prompt += 'They also made the following comments on other user posts:\n';
+        prompt += 'They have also written comments in response to the posts of other social media users:\n';
         comments.forEach(comment => {
-            prompt += `- "${comment.response}" in response to "${comment.body}" (written by user ${comment.actor})\n`;
+            prompt += `In response to a social media post saying "${comment.body}" (written by ${comment.actor}):\n`
+            prompt += `user wrote: "${comment.response}" \n\n`;
         });
     }
 
@@ -167,8 +180,6 @@ async function generateReport(userDocument, id, model) {
 
 
 app.post('/', async (req, res) => {
-    console.log("PID", req.body.prolificID);
-    console.log("model", req.body.model);
     const prolificId = req.body.prolificID;
     let model = null;
     if (req.body.model) {
@@ -177,35 +188,41 @@ app.post('/', async (req, res) => {
     let mongoClient;
 
     try {
-        mongoClient = new MongoClient(process.env.MONGODB_URI);
-        await mongoClient.connect();
-        const db = mongoClient.db('Cluster0');
+
+        const db = mongoose.connection.db;
         const usersCollection = db.collection('users');
         const reportsCollection = db.collection('reports');
         const userDocument = await usersCollection.findOne({ "mturkID": prolificId });
+
         if (!userDocument) {
             res.status(404).json({ message: 'User not found.' });
             return;
         }
+
         let reportDocument = await reportsCollection.findOne({
             "prolificID": prolificId,
             "model": model
         });
+
         if (!reportDocument) {
             let newReport = await generateReport(userDocument, prolificId, model);
             reportDocument = newReport;
-
         }
+
         res.json(reportDocument);
     } catch (error) {
         console.error('Error fetching report:', error);
         res.status(500).json({ message: 'An error occurred while fetching the report.' });
-    } finally {
-        if (mongoClient) {
-            await mongoClient.close();
-        }
     }
 });
+
+app.use(express.static(path.join(__dirname, 'build')));
+
+// Serve the React application for all other routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
 
 app.use((err, req, res, next) => {
     res.locals.message = err.message;
