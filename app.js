@@ -6,6 +6,7 @@ const Groq = require('groq-sdk');
 const Report = require('./models/Report.js');
 const cors = require('cors');
 const OpenAI = require("openai");
+const path = require('path');
 
 
 dotenv.config({ path: '.env' });
@@ -213,6 +214,7 @@ app.post(`/report/:prolificID`, async (req, res) => {
 });
 
 app.use(express.static(path.join(__dirname, 'build')));
+
 
 // Serve the React application for all other routes
 app.get('*', (req, res) => {
