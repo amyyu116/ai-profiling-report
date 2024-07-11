@@ -10,11 +10,12 @@ const Home = () => {
     const navigate = useNavigate();
     const { Search } = Input;
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        navigate(`/report/${prolificID}`);
+    const handleSearch = (value) => {
+        setProlificID(value);
+        if (value) {
+            navigate(`/report/${value}`);
+        }
     };
-
 
     return (
         <div>
@@ -28,7 +29,7 @@ const Home = () => {
             >
                 <div className={styles.header}>
                     <h1>AI Profiling Report</h1>
-                    <form onSubmit={handleSubmit} className={styles.form}>
+                    <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
                         Welcome! Search your Prolific ID to be redirected to a personalized AI-generated profiling report. <br />
                         <Search
                             placeholder="Enter Prolific ID here"
@@ -39,7 +40,7 @@ const Home = () => {
                                 width: 500,
                                 "padding-top": "16px",
                             }}
-                            onSearch={(value) => setProlificID(value)}
+                            onSearch={handleSearch}
                         />
                     </form>
 

@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import axiosInstance from './axiosInstance';
+
 import styles from '../index.module.css';
 import Input from './Input';
 import Output from './Output';
@@ -15,7 +17,7 @@ const Report = (props) => {
             try {
                 setReport(null);
                 console.log('Fetching report...');
-                const response = await axios.post(`/report/${props.prolificID}`, {
+                const response = await axiosInstance.post(`/report/${props.prolificID}`, {
                     prolificID: props.prolificID,
                     model: props.model
                 });
@@ -33,11 +35,8 @@ const Report = (props) => {
     return (<ConfigProvider
         theme={{
             token: {
-                // Primary color for components
                 colorPrimary: '#556b2f',
-                // Specific tokens for tabs
                 colorBorder: '#556b2f',
-                // Background for tabs
                 colorBgContainer: '#f6ffed',
             },
         }}
