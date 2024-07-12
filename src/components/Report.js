@@ -17,7 +17,10 @@ const Report = (props) => {
             try {
                 setReport(null);
                 console.log('Fetching report...');
-
+                const response = await axios.post(`/report/${props.prolificID}`, {
+                    prolificID: props.prolificID,
+                    model: props.model,
+                });
                 setReport(response.data);
                 setError(null);
             } catch (error) {
