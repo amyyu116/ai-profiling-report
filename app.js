@@ -178,7 +178,7 @@ async function generateReport(userDocument, id, model) {
 }
 
 
-app.post('/report/:prolificID', async (req, res) => {
+app.post(`/report/:prolificID`, async (req, res) => {
     const prolificId = req.body.prolificID;
     let model = null;
     if (req.body.model) {
