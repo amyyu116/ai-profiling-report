@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import axiosInstance from './axiosInstance';
-
 import styles from '../index.module.css';
 import Input from './Input';
 import Output from './Output';

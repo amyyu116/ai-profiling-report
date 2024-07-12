@@ -132,3 +132,77 @@ input {
 .Search {
   padding-top: 20px;
 }
+
+@media (max-width: 768px) {
+  body {
+    padding: 8px;
+    margin-bottom: 20px;
+    font-size: 16px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  h2,
+  h3 {
+    font-size: 16px;
+  }
+
+  p,
+  li {
+    font-size: 14px;
+  }
+
+  button {
+    height: 60px;
+  }
+
+  .header {
+    margin-left: 4%;
+  }
+
+  .menu {
+    min-width: 100%;
+    margin-left: 0;
+    gap: 8px;
+  }
+
+  .report {
+    flex-direction: column;
+    margin-left: 0;
+    gap: 16px;
+  }
+
+  .section {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 24px;
+  }
+
+  .details {
+    height: auto;
+  }
+
+  pre {
+    font-size: 14px;
+  }
+
+  form {
+    gap: 16px;
+  }
+
+  .Button {
+    font-size: 16px;
+    height: 30px;
+  }
+
+  input {
+    height: 16px;
+    padding-top: 16px;
+  }
+
+  .Search {
+    padding-top: 16px;
+  }
+}
