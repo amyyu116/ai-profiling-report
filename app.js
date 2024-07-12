@@ -6,9 +6,14 @@ const Groq = require('groq-sdk');
 const Report = require('./models/Report.js');
 const OpenAI = require("openai");
 const path = require('path');
-
+const { MongoClient } = require('mongodb');
 
 dotenv.config({ path: '.env' });
+
+const mongoClient = new MongoClient(process.env.MONGODB_URI);
+const db = mongoClient.db('Cluster0');
+
+
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -24,13 +29,14 @@ const openai = new OpenAI({
 console.log('Starting server setup...');
 
 
-mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI);
+mongoose.connect(process.env.MONGODB_URI);
 
 mongoose.connection.on('error', (err) => {
     console.error(err);
     console.log('%s MongoDB connection error. Please make sure MongoDB is running.');
     process.exit(1);
 });
+
 
 
 async function userToPrompt(user) {
@@ -184,13 +190,14 @@ app.post(`/report/:prolificID`, async (req, res) => {
     if (req.body.model) {
         model = req.body.model;
     };
-
+    let mongoClient;
     try {
-
-        const db = mongoose.connection.db;
+        mongoClient = new MongoClient(process.env.MONGODB_URI);
+        await mongoClient.connect();
         const usersCollection = db.collection('users');
         const reportsCollection = db.collection('reports');
         const userDocument = await usersCollection.findOne({ "mturkID": prolificId });
+
 
         if (!userDocument) {
             res.status(404).json({ message: 'User not found.' });
