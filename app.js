@@ -58,7 +58,7 @@ async function userToPrompt(user) {
     prompt += `During their time spent on the social media simulation, they have made ${user.numPosts + 1} post(s) on the platform.\n`;
     let postNumber = 1;
     user.posts.reverse().forEach(post => {
-        prompt += `Post ${postNumber}: "${post.body}"\n`;
+        prompt += `User-written Post ${postNumber}: "${post.body}"\n`;
         if (post.comments && post.comments.length > 0) {
             let userComments = post.comments.filter((comment) => (!comment.actor));
             if (userComments.length > 0) {
@@ -71,52 +71,43 @@ async function userToPrompt(user) {
         ++postNumber;
         prompt += `\n`;
     });
-    const actions = {
-        posts: { flagged: [], liked: [] },
-        comments: { flagged: [], liked: [] }
-    };
-    const comments = [];
+
+    prompt += "Here are the actions they took on the posts of other users: \n";
+
 
     for (const post of user.feedAction) {
+        // note that postobj is referring to posts from the 'scripts' table
+        // this is different from the post item within the feed action array we are looping through
+        const postobj = await db.collection('scripts').findOne({ _id: post.post });
+        const actor = await db.collection('actors').findOne({ _id: postobj.actor });
+
+        prompt += `Post written by ${actor.username}: "${postobj.body.replace(/\n/g, "")}" \n`;
         if (post.liked) {
-            const likedPost = await db.collection('scripts').findOne({ _id: post.post });
-            const actor = await db.collection('actors').findOne({ _id: likedPost.actor });
-            actions.posts.liked.push({ body: likedPost.body, actor: actor.username });
+            prompt += "- The user liked this post.\n"
         }
         if (post.flagged) {
-            const flaggedPost = await db.collection('scripts').findOne({ _id: post.post });
-            const actor = await db.collection('actors').findOne({ _id: flaggedPost.actor });
-            actions.posts.flagged.push({ body: flaggedPost.body, actor: actor.username });
+            prompt += "- The user flagged this post.\n"
         }
         if (post.comments.length > 0) {
             for (const comment of post.comments) {
                 const commentedPost = await db.collection('scripts').findOne({ _id: post.post });
-                const actor = await db.collection('actors').findOne({ _id: commentedPost.actor });
-                comments.push({ body: commentedPost.body, actor: actor.username, response: comment.body });
+                if (comment.new_comment) {
+                    prompt += `- On this post, user commented: "${comment.body}"\n`;
+                } else {
+                    // fetch comment text and see if flagged or liked
+                    for (const commentobj of postobj.comments) {
+                        if (commentobj._id.toString() === comment.comment.toString()) {
+                            if (comment.liked) {
+                                prompt += `- On this post, user liked the comment written by another user: "${commentobj.body}"\n`;
+                            } else if (comment.flagged) {
+                                prompt += `- On this post, user flagged the comment written by another user: "${commentobj.body}"\n`;
+                            }
+                        }
+                    }
+                }
             }
         }
-    }
-
-    for (const item in actions) {
-        for (const action in actions[item]) {
-            if (actions[item][action].length === 0) {
-                prompt += `During their time spent on the social media simulation, they ${action} zero ${item}.\n`;
-            } else {
-                prompt += `During their time spent on the social media simulation, they ${action} the following ${item}:\n`;
-                actions[item][action].forEach(post => {
-                    prompt += `- "${post.body.replace(/\n/g, "")}" (written by ${post.actor})\n`;
-                });
-                prompt += `\n`;
-            }
-        }
-    }
-
-    if (comments.length > 0) {
-        prompt += 'They have also written comments in response to the posts of other social media users:\n';
-        comments.forEach(comment => {
-            prompt += `In response to a social media post saying "${comment.body}" (written by ${comment.actor}):\n`
-            prompt += `user wrote: "${comment.response}" \n\n`;
-        });
+        prompt += '\n';
     }
 
     return prompt;
