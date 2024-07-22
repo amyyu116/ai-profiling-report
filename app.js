@@ -10,16 +10,13 @@ const { MongoClient } = require('mongodb');
 
 dotenv.config({ path: '.env' });
 
-const mongoClient = new MongoClient(process.env.MONGODB_URI);
-const db = mongoClient.db('Cluster0');
-
-
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'build')));
+
 
 const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const openai = new OpenAI({
@@ -37,7 +34,8 @@ mongoose.connection.on('error', (err) => {
     process.exit(1);
 });
 
-
+const mongoClient = new MongoClient(process.env.MONGODB_URI);
+const db = mongoClient.db('Cluster0');
 
 async function userToPrompt(user) {
     let prompt = `The user you are profiling is someone with the username ${user.username}.\n\n`;
